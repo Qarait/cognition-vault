@@ -1,0 +1,35 @@
+{
+  "name": "cognition-vault",
+  "version": "1.0.0",
+  "description": "Local-first AI history archive",
+  "main": "dist-electron/main.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "dist": "electron-builder",
+    "preview": "vite preview",
+    "gate": "node scripts/v1_gate.js",
+    "bench": "node scripts/bench_latency_db.js",
+    "privacy-check": "node scripts/diagnostics_privacy_test.js"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "better-sqlite3": "^11.10.0",
+    "lucide-react": "^0.344.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-window": "^1.8.11"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@types/react-window": "^1.8.8",
+    "@vitejs/plugin-react": "^4.7.0",
+    "electron": "^29.4.6",
+    "electron-builder": "^24.13.3",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21",
+    "vite-plugin-electron": "^0.28.8",
+    "vite-plugin-electron-renderer": "^0.14.6"
+  }
+}
