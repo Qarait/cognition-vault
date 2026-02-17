@@ -1,4 +1,5 @@
-import { os, app } from 'electron'
+import { app } from 'electron'
+import os from 'node:os'
 import path from 'node:path'
 import fs from 'node:fs'
 import { getDb } from './db'
