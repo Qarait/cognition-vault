@@ -9,6 +9,13 @@ export default defineConfig({
         electron({
             main: {
                 entry: 'electron/main.ts',
+                vite: {
+                    build: {
+                        rollupOptions: {
+                            external: ['better-sqlite3', 'adm-zip'],
+                        },
+                    },
+                },
             },
             preload: {
                 input: path.join(__dirname, 'electron/preload.ts'),
