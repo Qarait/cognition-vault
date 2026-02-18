@@ -102,9 +102,43 @@ function assertNoFilesOutsideVault() {
     }
 }
 
+// ─── Raw ZIP Path Traversal Scanner ──────────────────────────────────────────
+// AdmZip silently normalizes '../' in entry names, so we must scan the raw
+// ZIP local file headers directly from the buffer before AdmZip touches it.
+// Local file header signature: 0x04034b50 (PK\x03\x04)
+// Filename length is at offset 26 (2 bytes, little-endian)
+// Extra field length at offset 28 (2 bytes, little-endian)
+// Filename starts at offset 30
+function rawZipHasPathTraversal(buffer) {
+    const SIG = 0x04034b50;
+    let offset = 0;
+    while (offset + 30 < buffer.length) {
+        const sig = buffer.readUInt32LE(offset);
+        if (sig !== SIG) break;
+        const filenameLen = buffer.readUInt16LE(offset + 26);
+        const extraLen = buffer.readUInt16LE(offset + 28);
+        const filename = buffer.slice(offset + 30, offset + 30 + filenameLen).toString('utf-8');
+        // Check each path component for '..'
+        const parts = filename.replace(/\\/g, '/').split('/');
+        if (parts.some(p => p === '..')) return filename;
+        // Advance to next local file header
+        const compressedSize = buffer.readUInt32LE(offset + 18);
+        offset += 30 + filenameLen + extraLen + compressedSize;
+    }
+    return null;
+}
+
 // ─── ZIP Safety Harness ───────────────────────────────────────────────────────
 function importZip(runId, provider, buffer, filename) {
     const artifactId = storeArtifact(runId, provider, 'zip', filename, buffer);
+
+    // Raw path traversal check BEFORE AdmZip normalizes entry names
+    const slipEntry = rawZipHasPathTraversal(buffer);
+    if (slipEntry) {
+        failRun(runId, 'ZIP_SLIP_DETECTED', `Rejected path traversal entry: ${slipEntry}`);
+        return;
+    }
+
     let zip;
     try {
         zip = new AdmZip(buffer);
@@ -112,6 +146,7 @@ function importZip(runId, provider, buffer, filename) {
         failRun(runId, 'ZIP_CORRUPT', e.message);
         return;
     }
+
 
     const entries = zip.getEntries();
 
