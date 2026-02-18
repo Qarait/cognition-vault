@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
 
       - name: Install Dependencies
@@ -27,13 +27,13 @@ jobs:
       - name: Build Production Assets
         run: npm run build
 
+      - name: Bench (DB sanity + JSON output)
+        run: npm run bench
+
       - name: Package Installers
         run: npm run dist
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Bench (DB sanity + JSON output)
-        run: npm run bench
 
       - name: Generate SHA256SUMS.txt (release assets only)
         shell: pwsh
