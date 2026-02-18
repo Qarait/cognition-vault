@@ -169,8 +169,14 @@ function importZip(runId, provider, buffer, filename) {
         }
 
         const uncompressedSize = (entry.header && entry.header.size) || 0;
+        const compressedSize = (entry.header && entry.header.compressedSize) || 1;
+        const ratio = uncompressedSize / compressedSize;
         if (uncompressedSize > MAX_SINGLE) {
             failRun(runId, 'ZIP_ENTRY_TOO_LARGE', `Entry ${entry.entryName} is ${uncompressedSize} bytes, limit is ${MAX_SINGLE}`);
+            return;
+        }
+        if (ratio > 100) {
+            failRun(runId, 'ZIP_RATIO_BOMB', `Entry ${entry.entryName} has ${ratio.toFixed(0)}:1 ratio (limit 100:1)`);
             return;
         }
         totalSize += uncompressedSize;
@@ -262,6 +268,13 @@ assertCase('Case 5: Corrupt ZIP', () => {
     assertRunFailed(runId, 'ZIP_CORRUPT');
 });
 
+assertCase('Case 9: Compression Ratio Bomb', () => {
+    const runId = startRun('chatgpt');
+    const buf = fs.readFileSync(path.join(FIXTURES_DIR, 'zip_ratio_bomb.zip'));
+    importZip(runId, 'chatgpt', buf, 'zip_ratio_bomb.zip');
+    assertRunFailed(runId, 'ZIP_RATIO_BOMB');
+});
+
 console.log('\n[Parser Robustness]');
 
 assertCase('Case 6: Malformed JSON', () => {
@@ -287,7 +300,7 @@ assertCase('Case 8: chat.html Fallback Drift', () => {
 
 console.log('\n[Atomicity]');
 
-assertCase('Case 9: Simulated DB Write Failure Mid-Import (transaction rollback)', () => {
+assertCase('Case 10: Simulated DB Write Failure Mid-Import (transaction rollback)', () => {
     const runId = startRun('chatgpt');
     // Simulate a mid-import failure using a transaction that deliberately throws
     try {
@@ -310,7 +323,7 @@ assertCase('No files written outside vault directory', () => {
 });
 
 // ─── Summary ──────────────────────────────────────────────────────────────────
-console.log(`\n--- Phase 2A Results: ${passed} passed, ${failed} failed ---`);
+console.log(`\n--- Phase 2A Results: ${passed} passed, ${failed} failed (10 cases + FS check) ---`);
 if (failed > 0) {
     console.error('\n❌ Phase 2A: FAIL');
     process.exit(1);

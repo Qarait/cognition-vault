@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "gate": "node scripts/v1_gate.js",
     "bench": "node scripts/bench_latency_db.js",
-    "privacy-check": "node scripts/diagnostics_privacy_test.js"
+    "privacy-check": "node scripts/diagnostics_privacy_test.js",
+    "qualify:integration": "tsc --project tsconfig.node.json && node scripts/verify_integration.js"
   },
   "dependencies": {
     "adm-zip": "^0.5.16",

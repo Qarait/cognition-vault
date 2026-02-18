@@ -167,4 +167,67 @@ console.log('\n[8] chat.html Fallback Drift (no expected markers)');
 <body><div class="unknown-wrapper"><p>No messages here in expected format.</p></div></body></html>`);
 }
 
+// ─── Case 9: Compression Ratio Bomb ───────────────────────────────────────────
+// Production guard in ipcHandlers.ts: ratio > 100 → blocked.
+// We spoof header.size (uncompressed=200) vs compressedSize=1 in the central
+// directory so AdmZip's entry.header reports a ~200:1 ratio.
+// The actual content bytes are just 1 byte so the fixture file stays tiny.
+console.log('\n[9] Compression Ratio Bomb (spoofed headers)');
+{
+    const entryName = 'conversations.json';
+    const nameBytes = Buffer.from(entryName, 'utf-8');
+    const realContent = Buffer.from('X');           // 1 real byte on disk
+    const spoofedUncompressed = 200;               // lie: claim 200 bytes out
+    const spoofedCompressed = 1;                 // lie: claim 1 byte in → 200:1
+
+    // CRC of actual content
+    let crc = 0xFFFFFFFF;
+    const tbl = [];
+    for (let i = 0; i < 256; i++) { let c = i; for (let j = 0; j < 8; j++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1); tbl[i] = c; }
+    for (const b of realContent) crc = tbl[(crc ^ b) & 0xFF] ^ (crc >>> 8);
+    crc = (crc ^ 0xFFFFFFFF) >>> 0;
+
+    // Local file header — use spoofed sizes
+    const lh = Buffer.alloc(30 + nameBytes.length);
+    lh.writeUInt32LE(0x04034b50, 0);
+    lh.writeUInt16LE(20, 4);
+    lh.writeUInt16LE(0, 6);
+    lh.writeUInt16LE(8, 8);              // compression method 8 (deflate) — lies about being compressed
+    lh.writeUInt16LE(0, 10); lh.writeUInt16LE(0, 12);
+    lh.writeUInt32LE(crc, 14);
+    lh.writeUInt32LE(spoofedCompressed, 18);    // compressed size
+    lh.writeUInt32LE(spoofedUncompressed, 22);  // uncompressed size ← ratio trigger
+    lh.writeUInt16LE(nameBytes.length, 26);
+    lh.writeUInt16LE(0, 28);
+    nameBytes.copy(lh, 30);
+
+    // Central directory — same spoofed sizes (AdmZip reads header from here)
+    const cd = Buffer.alloc(46 + nameBytes.length);
+    cd.writeUInt32LE(0x02014b50, 0);
+    cd.writeUInt16LE(20, 4); cd.writeUInt16LE(20, 6);
+    cd.writeUInt16LE(0, 8);
+    cd.writeUInt16LE(8, 10);             // compression method
+    cd.writeUInt16LE(0, 12); cd.writeUInt16LE(0, 14);
+    cd.writeUInt32LE(crc, 16);
+    cd.writeUInt32LE(spoofedCompressed, 20);    // compressed size
+    cd.writeUInt32LE(spoofedUncompressed, 24);  // uncompressed size ← ratio trigger
+    cd.writeUInt16LE(nameBytes.length, 28);
+    cd.writeUInt16LE(0, 30); cd.writeUInt16LE(0, 32);
+    cd.writeUInt16LE(0, 34); cd.writeUInt16LE(0, 36);
+    cd.writeUInt32LE(0, 38); cd.writeUInt32LE(0, 42);
+    nameBytes.copy(cd, 46);
+
+    const cdOffset = lh.length + realContent.length;
+    const eocd = Buffer.alloc(22);
+    eocd.writeUInt32LE(0x06054b50, 0);
+    eocd.writeUInt16LE(0, 4); eocd.writeUInt16LE(0, 6);
+    eocd.writeUInt16LE(1, 8); eocd.writeUInt16LE(1, 10);
+    eocd.writeUInt32LE(cd.length, 12);
+    eocd.writeUInt32LE(cdOffset, 16);
+    eocd.writeUInt16LE(0, 20);
+
+    write('zip_ratio_bomb.zip', Buffer.concat([lh, realContent, cd, eocd]));
+}
+
 console.log('\n✅ All negative fixtures created in tests/fixtures/negative/');
+

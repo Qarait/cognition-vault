@@ -48,6 +48,13 @@ jobs:
       - name: Phase 2B — Verify Scale (Tier 1, 10k)
         run: node scripts/verify_scale.js 10000
 
+      # ── Phase 3: Integration Qualification ──────────────────────────────────
+      - name: Phase 3 — Compile TypeScript
+        run: npx tsc --project tsconfig.node.json
+
+      - name: Phase 3 — Verify Integration (real code path)
+        run: node scripts/verify_integration.js
+
       # ── Artifacts ────────────────────────────────────────────────────────────
       - name: Upload Scale Results
         if: always()
