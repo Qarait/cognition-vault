@@ -41,12 +41,14 @@ console.log('\n[2] Single Entry Too Large');
 
 // ─── Case 3: Total Uncompressed Too Large ─────────────────────────────────────
 // Controlled by VAULT_ZIP_MAX_TOTAL_BYTES env var in verifier
+// Each entry must be UNDER the single-file limit (1KB) but collectively exceed total (4KB)
 console.log('\n[3] Total Uncompressed Too Large');
 {
     const zip = new AdmZip();
-    // 3 entries × 2KB = 6KB total — verifier sets limit to 4KB
-    for (let i = 0; i < 3; i++) {
-        zip.addFile(`chunk_${i}.json`, Buffer.alloc(2048, 'B'));
+    // 6 entries × 800 bytes = 4800 bytes total — verifier sets total limit to 4096 bytes
+    // Each entry is 800 bytes, well under the 1024-byte single-file limit
+    for (let i = 0; i < 6; i++) {
+        zip.addFile(`chunk_${i}.json`, Buffer.alloc(800, 'B'));
     }
     write('zip_total_too_large.zip', zip.toBuffer());
 }

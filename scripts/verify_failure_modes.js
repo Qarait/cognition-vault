@@ -125,9 +125,10 @@ function importZip(runId, provider, buffer, filename) {
     for (const entry of entries) {
         if (entry.isDirectory) continue;
 
-        // ZIP Slip: reject any entry with path traversal
-        const normalized = path.normalize(entry.entryName);
-        if (normalized.startsWith('..') || path.isAbsolute(normalized)) {
+        // ZIP Slip: check raw entryName for path traversal components
+        // Do NOT use path.normalize() — it resolves '..' which defeats the check
+        const entryParts = entry.entryName.replace(/\\/g, '/').split('/');
+        if (entryParts.some(p => p === '..') || path.isAbsolute(entry.entryName)) {
             failRun(runId, 'ZIP_SLIP_DETECTED', `Rejected path traversal entry: ${entry.entryName}`);
             return;
         }
