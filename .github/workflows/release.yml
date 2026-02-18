@@ -29,6 +29,8 @@ jobs:
 
       - name: Package Installers
         run: npm run dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Bench (DB sanity + JSON output)
         run: npm run bench
