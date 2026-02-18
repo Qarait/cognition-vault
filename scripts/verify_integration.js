@@ -8,10 +8,11 @@
  * Prerequisites: `tsc --project tsconfig.integration.json` must have run.
  *
  * Stubbing strategy:
- *   vault.ts imports `app` from 'electron' for ARTIFACTS_PATH.
- *   We intercept Node's module resolver before loading any compiled code,
- *   injecting a fake 'electron' that returns a temp vault dir.
- *   Everything else is real: db.ts, vault.ts, importers/*.
+ *   vault.ts no longer imports `app` from 'electron' for paths.
+ *   Since Phase 5, all paths come from paths.ts (initPaths/paths).
+ *   We call initPaths(VAULT_TEST_DIR) before loading any vault code,
+ *   so no electron stub is needed for paths. The stub is still used
+ *   for ipcMain/dialog if any module tries to import electron.
  */
 
 'use strict';
@@ -55,6 +56,7 @@ if (!fs.existsSync(DIST)) {
     process.exit(1);
 }
 
+const { initPaths } = require(path.join(DIST, 'paths.js'));
 const { initDb, getDb } = require(path.join(DIST, 'db.js'));
 const { createIngestionRun,
     storeRawArtifact,
@@ -63,8 +65,8 @@ const { createIngestionRun,
 const { importChatGPT } = require(path.join(DIST, 'importers', 'chatgpt.js'));
 
 // ─── Test DB Init ─────────────────────────────────────────────────────────────
-const DB_PATH = path.join(VAULT_TEST_DIR, 'vault.db');
-initDb(DB_PATH);
+initPaths(VAULT_TEST_DIR);
+initDb();
 const db = getDb();
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
