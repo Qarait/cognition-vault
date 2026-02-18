@@ -43,13 +43,10 @@ jobs:
           if (-not (Test-Path $dist)) { throw "dist/ not found. Packaging likely failed." }
           if (Test-Path $out) { Remove-Item $out -Force }
 
-          # Only hash what we ship
-          $patterns = @("*.exe", "*.zip")
-          $files = foreach ($p in $patterns) {
-            Get-ChildItem $dist -File -Filter $p -ErrorAction SilentlyContinue
-          } | Sort-Object Name -Unique
+          $assets = Get-ChildItem -Path $dist -File | Where-Object { $_.Name -match '\.(exe|zip)$' } | Sort-Object Name -Unique
+          $files = @($assets)
 
-          if (@($files).Count -eq 0) { throw "No release artifacts found in dist/ to checksum." }
+          if ($files.Count -eq 0) { throw "No release artifacts found in dist/ to checksum." }
 
           $lines = New-Object System.Collections.Generic.List[string]
           foreach ($f in $files) {
@@ -100,11 +97,9 @@ jobs:
         shell: pwsh
         run: |
           $dist = "dist"
-          $assets = Get-ChildItem $dist -File |
-            Where-Object { $_.Name -match '\.(exe|zip)$' } |
-            Sort-Object Name
+          $assets = Get-ChildItem -Path $dist -File | Where-Object { $_.Name -match '\.(exe|zip)$' } | Sort-Object Name -Unique
 
-          if (@($assets).Count -eq 0) { throw "No .exe or .zip artifacts found in dist/." }
+          if ($assets.Count -eq 0) { throw "No .exe or .zip artifacts found in dist/." }
 
           $paths = @()
           foreach ($a in $assets) { $paths += $a.FullName }
