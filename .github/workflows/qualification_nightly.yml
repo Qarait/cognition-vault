@@ -1,0 +1,50 @@
+name: Nightly Qualification (Scale Tier 2)
+
+on:
+  schedule:
+    # Runs at 03:00 UTC every night
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+    inputs:
+      message_count:
+        description: 'Total messages to generate (threads × 100 msg/thread)'
+        required: false
+        default: '50000'
+
+jobs:
+  qualify-scale:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      # ── Phase 2B: Scale Qualification (Tier 2 — 50k) ────────────────────────
+      - name: Phase 2B — Generate Scale Fixture (Tier 2, 50k)
+        run: node scripts/generate_scale_fixture.js 500 100
+
+      - name: Phase 2B — Verify Scale (Tier 2, 50k)
+        run: node scripts/verify_scale.js 50000
+
+      # ── Artifacts ────────────────────────────────────────────────────────────
+      - name: Upload Scale Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qualification-scale-tier2
+          path: dist/qualification_scale.json
+
+      - name: Upload Scale DB (on failure only)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qualification-scale-db-failure
+          path: tests/fixtures/scale/qual_scale_*.db

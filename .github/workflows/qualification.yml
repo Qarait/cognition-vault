@@ -6,11 +6,6 @@ on:
   pull_request:
     branches: [ master, main ]
   workflow_dispatch:
-    inputs:
-      run_tier2:
-        description: 'Run Tier 2 scale (50k messages)'
-        required: false
-        default: 'false'
 
 jobs:
   qualify:
@@ -42,7 +37,6 @@ jobs:
       - name: Phase 2A — Verify Failure Modes
         run: node scripts/verify_failure_modes.js
         env:
-          # Small limits so tests run fast without huge allocations
           VAULT_ZIP_MAX_ENTRIES: "10"
           VAULT_ZIP_MAX_SINGLE_FILE_BYTES: "1024"
           VAULT_ZIP_MAX_TOTAL_BYTES: "4096"
@@ -54,29 +48,20 @@ jobs:
       - name: Phase 2B — Verify Scale (Tier 1, 10k)
         run: node scripts/verify_scale.js 10000
 
-      # ── Phase 2B: Scale Qualification (Tier 2 — 50k, manual/nightly only) ───
-      - name: Phase 2B — Generate Scale Fixture (Tier 2, 50k)
-        if: github.event.inputs.run_tier2 == 'true' || github.event_name == 'schedule'
-        run: node scripts/generate_scale_fixture.js 500 100
-
-      - name: Phase 2B — Verify Scale (Tier 2, 50k)
-        if: github.event.inputs.run_tier2 == 'true' || github.event_name == 'schedule'
-        run: node scripts/verify_scale.js 50000
-
       # ── Artifacts ────────────────────────────────────────────────────────────
-      - name: Upload Qualification DBs
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: qualification-dbs
-          path: |
-            tests/fixtures/qual.db
-            tests/fixtures/qual_failure.db
-            tests/fixtures/scale/qual_scale_*.db
-
       - name: Upload Scale Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: qualification-scale-results
           path: dist/qualification_scale.json
+
+      - name: Upload Qualification DBs (on failure only)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qualification-dbs-failure
+          path: |
+            tests/fixtures/qual.db
+            tests/fixtures/qual_failure.db
+            tests/fixtures/scale/qual_scale_*.db
