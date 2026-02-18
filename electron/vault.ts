@@ -50,7 +50,7 @@ export function storeRawArtifact(
   const sha256 = crypto.createHash('sha256').update(buffer).digest('hex')
 
   // Check for idempotency (Trust Moat #2)
-  const existing = db.prepare('SELECT id FROM raw_artifacts WHERE sha256 = ?').get(sha256)
+  const existing = db.prepare('SELECT id FROM raw_artifacts WHERE sha256 = ?').get(sha256) as { id: number } | undefined
   if (existing) {
     return { id: existing.id as number, skipped: true }
   }

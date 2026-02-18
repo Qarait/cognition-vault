@@ -45,7 +45,7 @@ export function getDiagnostics() {
     }
 
     // 2. Vault Stats (Allowlist Only)
-    const schema_version = db.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get()?.value || 'unknown'
+    const schema_version = (db.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get() as { value: string } | undefined)?.value || 'unknown'
     const db_stat = fs.statSync(path.join(app.getPath('userData'), 'vault', 'vault.db'))
 
     let artifacts_total_bytes = 0
