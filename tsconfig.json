@@ -21,6 +21,7 @@
         "jsx": "react-jsx",
         "types": [
             "node",
+            "better-sqlite3",
             "vite/client"
         ]
     },
