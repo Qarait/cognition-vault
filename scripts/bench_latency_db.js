@@ -14,9 +14,24 @@ function bench() {
     console.log(`Using Database: ${DB_PATH}`);
 
     if (!fs.existsSync(DB_PATH)) {
-        console.error('❌ Database not found at:', DB_PATH);
-        // Don't fail the whole release if bench data isn't found, just skip
-        process.exit(0);
+        console.log('⚠️ Database not found. Creating a minimal test database for CI...');
+        const dir = path.dirname(DB_PATH);
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+        const db = new Database(DB_PATH);
+        db.exec(`
+            CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY,
+                content_plain TEXT,
+                provider TEXT
+            );
+            CREATE VIRTUAL TABLE IF NOT EXISTS messages_fts USING fts5(content_plain, content='messages', content_rowid='id');
+            INSERT INTO messages (content_plain, provider) VALUES ('test message for benchmarking', 'ci');
+            INSERT INTO messages (content_plain, provider) VALUES ('another thinking entry', 'ci');
+            INSERT INTO messages_fts (rowid, content_plain) SELECT id, content_plain FROM messages;
+        `);
+        db.close();
+        console.log('✅ Minimal database created.');
     }
 
     const db = new Database(DB_PATH);

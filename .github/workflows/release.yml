@@ -39,7 +39,7 @@ jobs:
         shell: pwsh
         run: |
           $dist = "dist"
-          $out  = Join-Path $dist "SHA256SUMS.txt"
+          $out  = "$dist/SHA256SUMS.txt"
           if (-not (Test-Path $dist)) { throw "dist/ not found. Packaging likely failed." }
           if (Test-Path $out) { Remove-Item $out -Force }
 
@@ -99,12 +99,11 @@ jobs:
         run: |
           $dist = "dist"
           $assets = Get-ChildItem -Path $dist -File | Where-Object { $_.Name -match '\.(exe|zip)$' } | Sort-Object Name -Unique
-
           if ($assets.Count -eq 0) { throw "No .exe or .zip artifacts found in dist/." }
 
           $paths = @()
-          foreach ($a in $assets) { $paths += $a.FullName }
-          $paths += (Join-Path $dist "SHA256SUMS.txt")
+          foreach ($a in $assets) { $paths += "dist/$($a.Name)" }
+          $paths += "dist/SHA256SUMS.txt"
 
           # Output newline-separated list for action-gh-release
           "files<<EOF" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
