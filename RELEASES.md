@@ -6,11 +6,11 @@ Cognition Vault V1 is a "vault-grade" local-first AI history archive prioritizin
 
 ### Trust Boundaries
 - **Local-Only**: All processing (ingestion, parsing, indexing, search) happens strictly on your machine.
-- **Zero Telemetry**: Cognition Vault does not include analytics, crash reporting, or external network calls by default.
+- **Zero Telemetry**: Cognition Vault does not include analytics, crash reporting, or external network calls by default. No network calls are performed unless the user explicitly clicks a link (e.g., opening the GitHub release page).
 - **Forensic Preservation**: Raw artifacts are stored in `userData/vault/artifacts/` before parsing, ensuring source integrity.
 
 ### Security Posture
-- **Renderer Sandboxing**: The Chromium renderer is sandboxed with `contextIsolation: true`.
+- **Renderer hardening**: `contextIsolation: true`, `sandbox: true`, `nodeIntegration: false` (renderer cannot access Node APIs).
 - **No Node Integration**: The renderer has no direct access to Node.js APIs (fails closed).
 - **Content Security**: All imported content is strictly sanitized and escaped before rendering (React-escaped).
 - **Supply Chain**: Build reproducibility via pinned Node 22 toolchain and dependency lockfiles.
@@ -20,27 +20,24 @@ To verify the integrity of your download, compare the SHA-256 hash of the instal
 
 #### Windows
 ```powershell
-certutil -hashfile cognition-vault-setup-1.0.0.exe SHA256
+certutil -hashfile "cognition-vault Setup 1.0.0.exe" SHA256
 ```
 
-#### macOS / Linux
-```bash
-shasum -a 256 cognition-vault-setup-1.0.0.dmg
-# OR
-sha256sum cognition-vault-setup-1.0.0.AppImage
-```
 
 ### Official Verification Record
-- **GitHub Release**: [v1.0.0 Assets](https://github.com/USER/cognition-vault/releases/tag/v1.0.0)
-- **SHA256SUMS.txt**: (Paste contents from the official release file here after tag push)
+- **GitHub Release**: [v1.0.0 Assets](https://github.com/Qarait/cognition-vault/releases/tag/v1.0.0)
+- **SHA256SUMS.txt**: `96d6930f5b169792c5bd018562b36cd5436a74e48f9065f9a0cf81499b9d3c06  cognition-vault Setup 1.0.0.exe`
+
+### Windows SmartScreen
+This build is currently unsigned, so Windows may show a SmartScreen warning. Only proceed if you downloaded it from the official [GitHub Release](https://github.com/Qarait/cognition-vault/releases/tag/v1.0.0) and verified the checksum. Click **"More info"** → **"Run anyway"** to continue.
 
 ### Known Limitations
 - **ZIP Limits**: Per-file limit (100MB), total uncompressed limit (1GB), and entry limit (10,000) enforced for safety.
-- **`chat.html` Fallback**: Scrapping `chat.html` is best-effort and may break if export formats drift significantly.
+- **`chat.html` Fallback**: Scraping `chat.html` is best-effort and may break if export formats drift significantly (hardened by fixture corpus + regression tests).
 - **Deduplication**: Re-importing the same artifact (identical SHA-256) skips processing by design.
 
 ### Reference Benchmark Environment
-Metrics in the [walkthrough](walkthrough.md) were recorded in the following environment:
+Metrics in the [walkthrough](docs/walkthrough.md) were recorded in the following environment:
 - **OS**: Win32 x64 (Windows 11)
 - **CPU**: Intel Core i7-13700H
 - **RAM**: 32GB DDR5

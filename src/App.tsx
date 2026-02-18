@@ -351,14 +351,14 @@ function App() {
       <main>
         {isSearching && <div className="loading">Searching...</div>}
 
-        {isImporting && <div className="loading">Importing forensic artifacts...</div>}
+        {isImporting && <div className="loading">Importing your conversations...</div>}
 
         {lastImport && (
           <div className="import-success-banner">
             <div className="summary-card">
               <h3>Import Summary</h3>
-              <p>Success! Run ID: {lastImport.runId}</p>
-              <p>Artifact Hash Verified ✅</p>
+              <p>Import complete</p>
+              <p>Integrity verified ✅</p>
               <button onClick={() => setLastImport(null)}>Dismiss</button>
             </div>
           </div>
@@ -389,7 +389,7 @@ function App() {
               Import your ChatGPT or Claude exports to begin.
             </div>
             <div className="hero-buttons">
-              <button className="import-btn" onClick={() => setShowImportModal(true)}>Import Export</button>
+              <button className="import-btn" onClick={() => setShowImportModal(true)}>Import your AI history</button>
               <button className="secondary-btn-outline" onClick={() => setIsOnboarding(true)}>How it works</button>
             </div>
           </div>

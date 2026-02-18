@@ -55,6 +55,13 @@ jobs:
       - name: Phase 3 — Verify Integration (real code path)
         run: node scripts/verify_integration.js
 
+      # ── Phase 4: Distribution + Clarity Guards ────────────────────────────────
+      - name: Phase 4 — Docs Guard
+        run: node scripts/docs_guard.js
+
+      - name: Phase 4 — Copy Guard
+        run: node scripts/copy_guard.js
+
       # ── Artifacts ────────────────────────────────────────────────────────────
       - name: Upload Scale Results
         if: always()
