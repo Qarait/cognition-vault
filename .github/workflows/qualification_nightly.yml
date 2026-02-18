@@ -1,4 +1,4 @@
-name: Nightly Qualification (Scale Tier 2)
+name: Nightly Qualification (Scale Tier 2 + Packaged Smoke)
 
 on:
   schedule:
@@ -48,3 +48,75 @@ jobs:
         with:
           name: qualification-scale-db-failure
           path: tests/fixtures/scale/qual_scale_*.db
+
+  packaged-smoke:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      # ── Build + Package (same as release.yml) ─────────────────────────────
+      - name: Build Production Assets
+        run: npm run build
+
+      - name: Package Fixtures (generate ZIPs)
+        run: node scripts/package_fixtures.js
+
+      - name: Package Installers (win-unpacked)
+        run: npm run dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Phase 5: Packaged Build Smoke (all 3 providers) ───────────────────
+      - name: Phase 5 — Smoke ChatGPT
+        shell: pwsh
+        run: |
+          $vault = Join-Path $env:RUNNER_TEMP "vault_smoke_chatgpt"
+          New-Item -ItemType Directory -Force -Path $vault | Out-Null
+          $exe = Get-ChildItem dist -Recurse -File -Filter "*.exe" |
+            Where-Object { $_.FullName -match "win-unpacked" } |
+            Select-Object -First 1
+          if (-not $exe) { throw "Could not find unpacked exe under dist/win-unpacked" }
+          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/chatgpt_export.zip" --sentinel SENTINEL_CHATGPT_001 --provider chatgpt
+          if ($LASTEXITCODE -ne 0) { throw "Smoke ChatGPT failed (exit $LASTEXITCODE)" }
+
+      - name: Phase 5 — Smoke Claude
+        shell: pwsh
+        run: |
+          $vault = Join-Path $env:RUNNER_TEMP "vault_smoke_claude"
+          New-Item -ItemType Directory -Force -Path $vault | Out-Null
+          $exe = Get-ChildItem dist -Recurse -File -Filter "*.exe" |
+            Where-Object { $_.FullName -match "win-unpacked" } |
+            Select-Object -First 1
+          if (-not $exe) { throw "Could not find unpacked exe under dist/win-unpacked" }
+          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/claude_export.zip" --sentinel SENTINEL_CLAUDE_001 --provider claude
+          if ($LASTEXITCODE -ne 0) { throw "Smoke Claude failed (exit $LASTEXITCODE)" }
+
+      - name: Phase 5 — Smoke Gemini
+        shell: pwsh
+        run: |
+          $vault = Join-Path $env:RUNNER_TEMP "vault_smoke_gemini"
+          New-Item -ItemType Directory -Force -Path $vault | Out-Null
+          $exe = Get-ChildItem dist -Recurse -File -Filter "*.exe" |
+            Where-Object { $_.FullName -match "win-unpacked" } |
+            Select-Object -First 1
+          if (-not $exe) { throw "Could not find unpacked exe under dist/win-unpacked" }
+          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/gemini_export.zip" --sentinel SENTINEL_GEMINI_001 --provider gemini
+          if ($LASTEXITCODE -ne 0) { throw "Smoke Gemini failed (exit $LASTEXITCODE)" }
+
+      # ── Artifacts ────────────────────────────────────────────────────────────
+      - name: Upload Smoke Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: packaged-smoke-reports
+          path: ${{ runner.temp }}/vault_smoke_*

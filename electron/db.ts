@@ -1,17 +1,14 @@
 import Database from 'better-sqlite3'
-import path from 'node:path'
-import { app } from 'electron'
-
-const DB_PATH = path.join(app.getPath('userData'), 'vault', 'vault.db')
+import { paths } from './paths'
 
 let db: Database.Database
 
 export function initDb() {
-    db = new Database(DB_PATH)
-    db.pragma('foreign_keys = ON')
+  db = new Database(paths().dbPath)
+  db.pragma('foreign_keys = ON')
 
-    // Create tables
-    db.exec(`
+  // Create tables
+  db.exec(`
     CREATE TABLE IF NOT EXISTS schema_meta (
       key TEXT PRIMARY KEY,
       value TEXT
@@ -90,19 +87,19 @@ export function initDb() {
     END;
   `)
 
-    // Initialize schema version if not exists
-    const version = db.prepare('SELECT value FROM schema_meta WHERE key = ?').get('schema_version')
-    if (!version) {
-        db.prepare('INSERT INTO schema_meta (key, value) VALUES (?, ?)').run('schema_version', '1')
-    }
+  // Initialize schema version if not exists
+  const version = db.prepare('SELECT value FROM schema_meta WHERE key = ?').get('schema_version')
+  if (!version) {
+    db.prepare('INSERT INTO schema_meta (key, value) VALUES (?, ?)').run('schema_version', '1')
+  }
 
-    return db
+  return db
 }
 
 export function searchMessages(query: string) {
-    const db = getDb()
-    // Search normalized content using FTS5 and join with threads for context
-    return db.prepare(`
+  const db = getDb()
+  // Search normalized content using FTS5 and join with threads for context
+  return db.prepare(`
     SELECT 
       m.id, 
       m.thread_id, 
@@ -120,6 +117,6 @@ export function searchMessages(query: string) {
 }
 
 export function getDb() {
-    if (!db) initDb()
-    return db
+  if (!db) initDb()
+  return db
 }

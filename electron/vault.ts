@@ -2,9 +2,7 @@ import { getDb } from './db'
 import fs from 'node:fs'
 import path from 'node:path'
 import crypto from 'node:crypto'
-import { app } from 'electron'
-
-export const ARTIFACTS_PATH = path.join(app.getPath('userData'), 'vault', 'artifacts')
+import { paths } from './paths'
 
 export interface IngestionRun {
   id: number
@@ -58,7 +56,7 @@ export function storeRawArtifact(
   // Sanitize filename to prevent ZIP Slip / Path Traversal
   const safeFilename = path.basename(filename)
   const storedFilename = `${sha256}-${safeFilename}`
-  const storedPath = path.join(ARTIFACTS_PATH, storedFilename)
+  const storedPath = path.join(paths().artifactsDir, storedFilename)
 
   fs.writeFileSync(storedPath, buffer)
 
@@ -78,13 +76,14 @@ export function storeRawArtifact(
 export function wipeVault() {
   const db = getDb()
   const errors: string[] = []
+  const artifactsDir = paths().artifactsDir
 
   // Clear disk artifacts first (so we can fail before DB mutation if needed, though they are decoupled)
   try {
-    const files = fs.readdirSync(ARTIFACTS_PATH)
+    const files = fs.readdirSync(artifactsDir)
     for (const file of files) {
       try {
-        fs.unlinkSync(path.join(ARTIFACTS_PATH, file))
+        fs.unlinkSync(path.join(artifactsDir, file))
       } catch (e: any) {
         errors.push(`Failed to delete ${file}: ${e.message}`)
       }

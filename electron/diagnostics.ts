@@ -3,7 +3,7 @@ import os from 'node:os'
 import path from 'node:path'
 import fs from 'node:fs'
 import { getDb } from './db'
-import { ARTIFACTS_PATH } from './vault'
+import { paths } from './paths'
 
 /**
  * Privacy-Safe Diagnostics (Vault-Grade)
@@ -46,13 +46,13 @@ export function getDiagnostics() {
 
     // 2. Vault Stats (Allowlist Only)
     const schema_version = (db.prepare("SELECT value FROM schema_meta WHERE key = 'schema_version'").get() as { value: string } | undefined)?.value || 'unknown'
-    const db_stat = fs.statSync(path.join(app.getPath('userData'), 'vault', 'vault.db'))
+    const db_stat = fs.statSync(paths().dbPath)
 
     let artifacts_total_bytes = 0
     try {
-        const files = fs.readdirSync(ARTIFACTS_PATH)
+        const files = fs.readdirSync(paths().artifactsDir)
         for (const f of files) {
-            artifacts_total_bytes += fs.statSync(path.join(ARTIFACTS_PATH, f)).size
+            artifacts_total_bytes += fs.statSync(path.join(paths().artifactsDir, f)).size
         }
     } catch (e) { }
 

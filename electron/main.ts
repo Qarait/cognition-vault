@@ -1,18 +1,55 @@
 import { app, BrowserWindow, ipcMain } from 'electron'
 import path from 'node:path'
 import fs from 'node:fs'
+import { initPaths, paths } from './paths'
 import { initDb } from './db'
 import { registerHandlers } from './ipcHandlers'
 
-const VAULT_PATH = path.join(app.getPath('userData'), 'vault')
-const ARTIFACTS_PATH = path.join(VAULT_PATH, 'artifacts')
+// ── Smoke mode arg parsing (before any path computation) ────────────────
+interface SmokeArgs {
+    vaultDir: string
+    importFile: string
+    sentinel: string
+    provider: string
+}
+
+function parseSmokeArgs(): SmokeArgs | null {
+    const argv = process.argv
+    const smokeIdx = argv.indexOf('--smoke')
+    if (smokeIdx === -1) return null
+
+    const get = (flag: string): string => {
+        const idx = argv.indexOf(flag)
+        if (idx === -1 || idx + 1 >= argv.length) throw new Error(`--smoke requires ${flag}`)
+        return argv[idx + 1]
+    }
+
+    return {
+        vaultDir: get('--vault-dir'),
+        importFile: get('--import'),
+        sentinel: get('--sentinel'),
+        provider: argv.includes('--provider') ? get('--provider') : 'chatgpt',
+    }
+}
+
+const smokeArgs = parseSmokeArgs()
+
+// ── Smoke: override userData before anything computes paths ─────────────
+if (smokeArgs) {
+    app.disableHardwareAcceleration()
+    app.setPath('userData', smokeArgs.vaultDir)
+}
+
+// ── Initialize paths (single source of truth) ──────────────────────────
+initPaths(app.getPath('userData'))
 
 function initVault() {
-    if (!fs.existsSync(VAULT_PATH)) {
-        fs.mkdirSync(VAULT_PATH, { recursive: true })
+    const p = paths()
+    if (!fs.existsSync(p.vaultDir)) {
+        fs.mkdirSync(p.vaultDir, { recursive: true })
     }
-    if (!fs.existsSync(ARTIFACTS_PATH)) {
-        fs.mkdirSync(ARTIFACTS_PATH, { recursive: true })
+    if (!fs.existsSync(p.artifactsDir)) {
+        fs.mkdirSync(p.artifactsDir, { recursive: true })
     }
     initDb()
 }
@@ -37,8 +74,17 @@ function createWindow() {
     }
 }
 
-app.whenReady().then(() => {
+app.whenReady().then(async () => {
     initVault()
+
+    if (smokeArgs) {
+        // Headless smoke test — no window, no IPC
+        const { runSmoke } = require('./smoke')
+        await runSmoke(smokeArgs)
+        app.quit()
+        return
+    }
+
     registerHandlers()
     createWindow()
 
