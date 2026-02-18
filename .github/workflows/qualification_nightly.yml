@@ -86,7 +86,7 @@ jobs:
             Where-Object { $_.FullName -match "win-unpacked" } |
             Select-Object -First 1
           if (-not $exe) { throw "Could not find unpacked exe under dist/win-unpacked" }
-          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/chatgpt_export.zip" --sentinel SENTINEL_CHATGPT_001 --provider chatgpt
+          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/chatgpt_export.zip" --sentinel SENTINEL_CHATGPT_001 --provider chatgpt | Tee-Object -FilePath (Join-Path $env:RUNNER_TEMP "smoke_chatgpt.json")
           if ($LASTEXITCODE -ne 0) { throw "Smoke ChatGPT failed (exit $LASTEXITCODE)" }
 
       - name: Phase 5 — Smoke Claude
@@ -98,7 +98,7 @@ jobs:
             Where-Object { $_.FullName -match "win-unpacked" } |
             Select-Object -First 1
           if (-not $exe) { throw "Could not find unpacked exe under dist/win-unpacked" }
-          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/claude_export.zip" --sentinel SENTINEL_CLAUDE_001 --provider claude
+          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/claude_export.zip" --sentinel SENTINEL_CLAUDE_001 --provider claude | Tee-Object -FilePath (Join-Path $env:RUNNER_TEMP "smoke_claude.json")
           if ($LASTEXITCODE -ne 0) { throw "Smoke Claude failed (exit $LASTEXITCODE)" }
 
       - name: Phase 5 — Smoke Gemini
@@ -110,7 +110,7 @@ jobs:
             Where-Object { $_.FullName -match "win-unpacked" } |
             Select-Object -First 1
           if (-not $exe) { throw "Could not find unpacked exe under dist/win-unpacked" }
-          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/gemini_export.zip" --sentinel SENTINEL_GEMINI_001 --provider gemini
+          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/gemini_export.zip" --sentinel SENTINEL_GEMINI_001 --provider gemini | Tee-Object -FilePath (Join-Path $env:RUNNER_TEMP "smoke_gemini.json")
           if ($LASTEXITCODE -ne 0) { throw "Smoke Gemini failed (exit $LASTEXITCODE)" }
 
       # ── Artifacts ────────────────────────────────────────────────────────────
@@ -119,4 +119,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: packaged-smoke-reports
-          path: ${{ runner.temp }}/vault_smoke_*
+          path: ${{ runner.temp }}/smoke_*.json

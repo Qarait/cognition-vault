@@ -8,7 +8,13 @@
  * Exit codes:
  *   0 — pass (all assertions held)
  *   1 — fail (printed JSON report with error_code to stdout)
+ *
+ * The JSON report is forensic-grade: it includes runtime metadata so
+ * every smoke artifact in CI is self-describing.
  */
+import { app } from 'electron'
+import path from 'node:path'
+import { execSync } from 'node:child_process'
 import { importFileHeadless } from './ipcHandlers'
 import { searchMessages } from './db'
 import { wipeVault } from './vault'
@@ -21,9 +27,18 @@ interface SmokeArgs {
 }
 
 interface SmokeReport {
-    pass: boolean
+    // ── Forensic metadata ─────────────────────────────────────
+    app_version: string
+    commit_sha: string
+    electron_version: string
+    node_version: string
+    platform: string
+    // ── Test identity ─────────────────────────────────────────
     provider: string
+    fixture_name: string
     sentinel: string
+    // ── Results ───────────────────────────────────────────────
+    pass: boolean
     import_ms: number
     search_hits: number
     search_ms: number
@@ -33,9 +48,27 @@ interface SmokeReport {
     error_message?: string
 }
 
+function getCommitSha(): string {
+    // In CI, GITHUB_SHA is always set. Fallback to git for local runs.
+    if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA.slice(0, 12)
+    try {
+        return execSync('git rev-parse --short=12 HEAD', { encoding: 'utf-8' }).trim()
+    } catch {
+        return 'unknown'
+    }
+}
+
 export async function runSmoke(args: SmokeArgs): Promise<void> {
     const report: Partial<SmokeReport> = {
+        // Forensic metadata (populated immediately)
+        app_version: app.getVersion(),
+        commit_sha: getCommitSha(),
+        electron_version: process.versions.electron || 'unknown',
+        node_version: process.versions.node || 'unknown',
+        platform: `${process.platform}-${process.arch}`,
+        // Test identity
         provider: args.provider,
+        fixture_name: path.basename(args.importFile),
         sentinel: args.sentinel,
         pass: false,
     }
