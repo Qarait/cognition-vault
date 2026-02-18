@@ -57,7 +57,7 @@ function bench() {
             const term = sampleTerms[Math.floor(Math.random() * sampleTerms.length)];
 
             const start = process.hrtime.bigint();
-            db.prepare('SELECT id FROM messages_fts WHERE content_plain MATCH ?').all(term);
+            db.prepare('SELECT rowid FROM messages_fts WHERE content_plain MATCH ?').all(term);
             const end = process.hrtime.bigint();
 
             results.push(Number(end - start) / 1_000_000); // ms
