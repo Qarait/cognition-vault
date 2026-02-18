@@ -1,0 +1,21 @@
+[
+    {
+        "uuid": "thread_claude_001",
+        "name": "Claude Qualification Test",
+        "created_at": "2026-02-18T10:00:00Z",
+        "chat_messages": [
+            {
+                "uuid": "msg_claude_001",
+                "sender": "human",
+                "text": "Claude, please acknowledge the sentinel: SENTINEL_CLAUDE_001",
+                "created_at": "2026-02-18T10:00:00Z"
+            },
+            {
+                "uuid": "msg_claude_002",
+                "sender": "assistant",
+                "text": "Sentinel acknowledged: SENTINEL_CLAUDE_001. Forensic check: PASS.",
+                "created_at": "2026-02-18T10:00:05Z"
+            }
+        ]
+    }
+]

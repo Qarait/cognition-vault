@@ -1,0 +1,41 @@
+[
+    {
+        "id": "thread_chatgpt_001",
+        "title": "ChatGPT Qualification Test",
+        "create_time": 1708262400,
+        "mapping": {
+            "msg_chatgpt_001": {
+                "message": {
+                    "id": "msg_chatgpt_001",
+                    "author": {
+                        "role": "user"
+                    },
+                    "content": {
+                        "content_type": "text",
+                        "parts": [
+                            "Hello ChatGPT, please verify the sentinel: SENTINEL_CHATGPT_001"
+                        ]
+                    },
+                    "create_time": 1708262400
+                },
+                "parent": null
+            },
+            "msg_chatgpt_002": {
+                "message": {
+                    "id": "msg_chatgpt_002",
+                    "author": {
+                        "role": "assistant"
+                    },
+                    "content": {
+                        "content_type": "text",
+                        "parts": [
+                            "I have acknowledged the sentinel: SENTINEL_CHATGPT_001. Ingestion test in progress."
+                        ]
+                    },
+                    "create_time": 1708262405
+                },
+                "parent": "msg_chatgpt_001"
+            }
+        }
+    }
+]

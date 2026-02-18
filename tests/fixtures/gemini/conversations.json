@@ -1,0 +1,17 @@
+[
+    {
+        "title": "Gemini Qualification Test",
+        "conversations": [
+            {
+                "author": "user",
+                "content": "Verify Gemini sentinel: SENTINEL_GEMINI_001",
+                "created_at": "2026-02-18T11:00:00Z"
+            },
+            {
+                "author": "gemini",
+                "content": "Acknowledge SENTINEL_GEMINI_001. Local-first import test verified.",
+                "created_at": "2026-02-18T11:00:05Z"
+            }
+        ]
+    }
+]
