@@ -56,7 +56,8 @@ jobs:
 
           # Write with LF line endings and UTF-8 (No BOM) for max compatibility
           $text = ($lines -join "`n") + "`n"
-          [System.IO.File]::WriteAllText($out, $text, New-Object System.Text.UTF8Encoding($false))
+          $utf8 = New-Object System.Text.UTF8Encoding($false)
+          [System.IO.File]::WriteAllText($out, $text, $utf8)
 
       - name: Verify Checksums in CI
         shell: pwsh
