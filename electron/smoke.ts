@@ -14,6 +14,7 @@
  */
 import { app } from 'electron'
 import path from 'node:path'
+import fs from 'node:fs'
 import { execSync } from 'node:child_process'
 import { importFileHeadless } from './ipcHandlers'
 import { searchMessages } from './db'
@@ -24,6 +25,7 @@ interface SmokeArgs {
     importFile: string
     sentinel: string
     provider: string
+    smokeOut?: string
 }
 
 interface SmokeReport {
@@ -58,6 +60,20 @@ function getCommitSha(): string {
     }
 }
 
+function writeReport(report: Partial<SmokeReport>, outPath?: string, isError = false): void {
+    const json = JSON.stringify(report, null, 2)
+    // Always print to stdout/stderr for CI log visibility
+    if (isError) {
+        console.error(json)
+    } else {
+        console.log(json)
+    }
+    // Deterministic file output when --smoke-out is provided
+    if (outPath) {
+        fs.writeFileSync(outPath, json + '\n', 'utf-8')
+    }
+}
+
 export async function runSmoke(args: SmokeArgs): Promise<void> {
     const report: Partial<SmokeReport> = {
         // Forensic metadata (populated immediately)
@@ -88,7 +104,7 @@ export async function runSmoke(args: SmokeArgs): Promise<void> {
         if (hits.length === 0) {
             report.error_code = 'SENTINEL_NOT_FOUND'
             report.error_message = `FTS returned 0 results for sentinel "${args.sentinel}"`
-            console.log(JSON.stringify(report, null, 2))
+            writeReport(report, args.smokeOut)
             process.exit(1)
         }
 
@@ -103,19 +119,19 @@ export async function runSmoke(args: SmokeArgs): Promise<void> {
         if (postWipeHits.length !== 0) {
             report.error_code = 'WIPE_INCOMPLETE'
             report.error_message = `FTS still returned ${postWipeHits.length} results after wipe`
-            console.log(JSON.stringify(report, null, 2))
+            writeReport(report, args.smokeOut)
             process.exit(1)
         }
 
         // ── All clear ───────────────────────────────────────────────────────
         report.pass = true
-        console.log(JSON.stringify(report, null, 2))
+        writeReport(report, args.smokeOut)
         // Exit 0 is implicit — main.ts calls app.quit() after this returns
 
     } catch (err: any) {
         report.error_code = 'SMOKE_EXCEPTION'
         report.error_message = err.message
-        console.error(JSON.stringify(report, null, 2))
+        writeReport(report, args.smokeOut, true)
         process.exit(1)
     }
 }

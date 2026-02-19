@@ -12,6 +12,7 @@ interface SmokeArgs {
     importFile: string
     sentinel: string
     provider: string
+    smokeOut?: string
 }
 
 function parseSmokeArgs(): SmokeArgs | null {
@@ -30,6 +31,7 @@ function parseSmokeArgs(): SmokeArgs | null {
         importFile: get('--import'),
         sentinel: get('--sentinel'),
         provider: argv.includes('--provider') ? get('--provider') : 'chatgpt',
+        smokeOut: argv.includes('--smoke-out') ? get('--smoke-out') : undefined,
     }
 }
 

@@ -48,7 +48,7 @@ jobs:
             Where-Object { $_.FullName -match "win-unpacked" } |
             Select-Object -First 1
           if (-not $exe) { throw "Could not find unpacked exe under dist/win-unpacked" }
-          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/chatgpt_export.zip" --sentinel SENTINEL_CHATGPT_001 --provider chatgpt
+          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/chatgpt_export.zip" --sentinel SENTINEL_CHATGPT_001 --provider chatgpt --smoke-out dist/smoke_chatgpt.json
           if ($LASTEXITCODE -ne 0) { throw "Smoke ChatGPT failed (exit $LASTEXITCODE)" }
 
       - name: Phase 5 — Smoke Claude
@@ -60,7 +60,7 @@ jobs:
             Where-Object { $_.FullName -match "win-unpacked" } |
             Select-Object -First 1
           if (-not $exe) { throw "Could not find unpacked exe under dist/win-unpacked" }
-          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/claude_export.zip" --sentinel SENTINEL_CLAUDE_001 --provider claude
+          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/claude_export.zip" --sentinel SENTINEL_CLAUDE_001 --provider claude --smoke-out dist/smoke_claude.json
           if ($LASTEXITCODE -ne 0) { throw "Smoke Claude failed (exit $LASTEXITCODE)" }
 
       - name: Phase 5 — Smoke Gemini
@@ -72,7 +72,7 @@ jobs:
             Where-Object { $_.FullName -match "win-unpacked" } |
             Select-Object -First 1
           if (-not $exe) { throw "Could not find unpacked exe under dist/win-unpacked" }
-          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/gemini_export.zip" --sentinel SENTINEL_GEMINI_001 --provider gemini
+          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/gemini_export.zip" --sentinel SENTINEL_GEMINI_001 --provider gemini --smoke-out dist/smoke_gemini.json
           if ($LASTEXITCODE -ne 0) { throw "Smoke Gemini failed (exit $LASTEXITCODE)" }
 
       - name: Generate SHA256SUMS.txt (release assets only)
@@ -83,7 +83,7 @@ jobs:
           if (-not (Test-Path $dist)) { throw "dist/ not found. Packaging likely failed." }
           if (Test-Path $out) { Remove-Item $out -Force }
 
-          $assets = Get-ChildItem -Path $dist -File | Where-Object { $_.Name -match '\.(exe|zip)$' } | Sort-Object Name -Unique
+          $assets = Get-ChildItem -Path $dist -File | Where-Object { $_.Name -match '\.(exe|zip)$' -or $_.Name -match '^smoke_.*\.json$' } | Sort-Object Name -Unique
           $files = @($assets)
 
           if ($files.Count -eq 0) { throw "No release artifacts found in dist/ to checksum." }
@@ -138,8 +138,8 @@ jobs:
         shell: pwsh
         run: |
           $dist = "dist"
-          $assets = Get-ChildItem -Path $dist -File | Where-Object { $_.Name -match '\.(exe|zip)$' } | Sort-Object Name -Unique
-          if ($assets.Count -eq 0) { throw "No .exe or .zip artifacts found in dist/." }
+          $assets = Get-ChildItem -Path $dist -File | Where-Object { $_.Name -match '\.(exe|zip)$' -or $_.Name -match '^smoke_.*\.json$' } | Sort-Object Name -Unique
+          if ($assets.Count -eq 0) { throw "No .exe, .zip, or smoke artifacts found in dist/." }
 
           $paths = @()
           foreach ($a in $assets) { $paths += "dist/$($a.Name)" }

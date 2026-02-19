@@ -1,5 +1,31 @@
 # RELEASES
 
+## v1.1.0 — 2026-02-19
+
+### What Changed
+- **Packaged Smoke Gate (Phase 5)**: Every release candidate is now exercised as a packaged `.exe` against all 3 providers (ChatGPT, Claude, Gemini) before publishing. Smoke reports are forensic JSON with runtime metadata.
+- **Migration Scaffolding (Phase 6)**: Ordered, transactional, idempotent schema migrator with deterministic FTS repair. Opening vaults created by older versions will always upgrade cleanly.
+- **Release Integrity Pack (Phase 7C)**: Smoke JSON reports (`smoke_chatgpt.json`, `smoke_claude.json`, `smoke_gemini.json`) are now attached as release assets and included in `SHA256SUMS.txt`. Each release is a self-contained audit package.
+- **Deterministic Smoke Output**: Smoke runner now writes reports via `--smoke-out <path>` instead of stdout piping, eliminating contamination risk.
+- **Build vs Runtime Node Clarity**: Build toolchain uses Node 22 (CI/tsc/vite). Runtime uses Node 20.9 bundled with Electron 29. The version mismatch is expected and safe.
+
+### Trust Boundaries (Unchanged)
+- **Local-Only**: All processing happens strictly on your machine.
+- **Zero Telemetry**: No analytics, crash reporting, or external network calls.
+- **Forensic Preservation**: Raw artifacts stored before parsing.
+
+### Verification
+SHA256SUMS.txt covers installers **and** smoke reports.
+```powershell
+certutil -hashfile "cognition-vault Setup 1.1.0.exe" SHA256
+```
+Compare against values in `SHA256SUMS.txt` on the [v1.1.0 release page](https://github.com/Qarait/cognition-vault/releases/tag/v1.1.0).
+
+### Windows SmartScreen
+This build is currently unsigned, so Windows may show a SmartScreen warning. Only proceed if you downloaded it from the official [GitHub Release](https://github.com/Qarait/cognition-vault/releases/tag/v1.1.0) and verified the checksum. Click **"More info"** → **"Run anyway"** to continue.
+
+---
+
 ## v1.0.0 — 2026-02-16
 
 Cognition Vault V1 is a "vault-grade" local-first AI history archive prioritizing forensic integrity and performance.
@@ -42,5 +68,6 @@ Metrics in the [walkthrough](docs/walkthrough.md) were recorded in the following
 - **CPU**: Intel Core i7-13700H
 - **RAM**: 32GB DDR5
 - **Storage**: NVMe SSD
-- **Node**: 22.x
-- **Electron**: 29.x
+- **Build Toolchain**: Node 22.x (CI, tsc, vite)
+- **Runtime**: Node 20.9 bundled with Electron 29.x
+
