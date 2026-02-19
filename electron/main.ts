@@ -4,6 +4,7 @@ import fs from 'node:fs'
 import { initPaths, paths } from './paths'
 import { initDb } from './db'
 import { registerHandlers } from './ipcHandlers'
+import { runSmoke } from './smoke'
 
 // ── Smoke mode arg parsing (before any path computation) ────────────────
 interface SmokeArgs {
@@ -79,7 +80,6 @@ app.whenReady().then(async () => {
 
     if (smokeArgs) {
         // Headless smoke test — no window, no IPC
-        const { runSmoke } = require('./smoke')
         await runSmoke(smokeArgs)
         app.quit()
         return
