@@ -54,6 +54,16 @@ if (fs.existsSync(releasesPath)) {
             console.log(`  OK: RELEASES.md link → ${filePart}`);
         }
     }
+
+    // ── RELEASES.md format validation (for extraction script) ──────────
+    const releaseNotesRegex = /## v\d+\.\d+\.\d+.*?\n([\s\S]*?)\n---/;
+    if (!releaseNotesRegex.test(content.replace(/\r\n/g, '\n'))) {
+        console.error('FAIL: RELEASES.md format error. Expected "## vX.Y.Z ... \n ... \n---"');
+        console.error('      Check that the latest release block ends with a "---" separator line.');
+        failures++;
+    } else {
+        console.log('  OK: RELEASES.md format is compatible with extraction script');
+    }
 } else {
     console.error('FAIL: RELEASES.md itself is missing');
     failures++;
