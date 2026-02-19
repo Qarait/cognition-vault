@@ -62,6 +62,10 @@ jobs:
       - name: Phase 4 — Copy Guard
         run: node scripts/copy_guard.js
 
+      # ── Phase 6: Migration Qualification ─────────────────────────────────────
+      - name: Phase 6 — Verify Migrations (5 cases)
+        run: node scripts/verify_migrations.js
+
       # ── Artifacts ────────────────────────────────────────────────────────────
       - name: Upload Scale Results
         if: always()

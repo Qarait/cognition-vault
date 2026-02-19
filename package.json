@@ -13,7 +13,8 @@
     "privacy-check": "node scripts/diagnostics_privacy_test.js",
     "qualify:integration": "tsc --project tsconfig.integration.json && node scripts/verify_integration.js",
     "qualify:docs": "node scripts/docs_guard.js",
-    "qualify:copy": "node scripts/copy_guard.js"
+    "qualify:copy": "node scripts/copy_guard.js",
+    "qualify:migrations": "tsc --project tsconfig.integration.json && node scripts/verify_migrations.js"
   },
   "dependencies": {
     "adm-zip": "^0.5.16",
