@@ -1,6 +1,12 @@
-import { ipcMain } from 'electron'
+import { ipcMain, dialog } from 'electron'
 import { searchMessages } from './db'
-import { createIngestionRun, storeRawArtifact, finalizeIngestionRun } from './vault'
+import { createIngestionRun, storeRawArtifact, finalizeIngestionRun, wipeVault } from './vault'
+import { paths } from './paths'
+import { getDiagnostics } from './diagnostics'
+import { importChatGPT, importChatGPTfromHTML } from './importers/chatgpt'
+import { importClaude } from './importers/claude'
+import { importGemini } from './importers/gemini'
+import AdmZip from 'adm-zip'
 import path from 'node:path'
 import fs from 'node:fs'
 
@@ -11,11 +17,6 @@ import fs from 'node:fs'
  * This is the key invariant: smoke tests exercise the exact same code the user does.
  */
 export async function importFileHeadless(provider: string, filePath: string) {
-    const AdmZip = require('adm-zip')
-    const { importChatGPT } = require('./importers/chatgpt')
-    const { importClaude } = require('./importers/claude')
-    const { importGemini } = require('./importers/gemini')
-
     const buffer = fs.readFileSync(filePath)
     const filename = path.basename(filePath)
     const isZip = filename.toLowerCase().endsWith('.zip')
@@ -77,22 +78,16 @@ export async function importFileHeadless(provider: string, filePath: string) {
                 )
 
                 // Specific logic for known export formats
-                let processed = false
                 if (provider === 'chatgpt') {
                     if (entryName === 'conversations.json' || entryName.endsWith('/conversations.json')) {
                         await importChatGPT(run.id, childArtifact.id, entryBuffer.toString('utf-8'))
-                        processed = true
                     } else if (entryName === 'chat.html' || entryName.endsWith('/chat.html')) {
-                        const { importChatGPTfromHTML } = require('./importers/chatgpt')
                         await importChatGPTfromHTML(run.id, childArtifact.id, entryBuffer.toString('utf-8'))
-                        processed = true
                     }
                 } else if (provider === 'claude' && entryName.endsWith('.json')) {
                     await importClaude(run.id, childArtifact.id, entryBuffer.toString('utf-8'))
-                    processed = true
                 } else if (provider === 'gemini' && entryName.endsWith('.json')) {
                     await importGemini(run.id, childArtifact.id, entryBuffer.toString('utf-8'))
-                    processed = true
                 }
             }
         } else {
@@ -116,12 +111,10 @@ export async function importFileHeadless(provider: string, filePath: string) {
 
 export function registerHandlers() {
     ipcMain.handle('vault:diagnostics:get', () => {
-        const { getDiagnostics } = require('./diagnostics')
         return getDiagnostics()
     })
 
     ipcMain.handle('vault:status', () => {
-        const { paths } = require('./paths')
         return {
             status: 'secure',
             localOnly: true,
@@ -146,8 +139,6 @@ export function registerHandlers() {
     })
 
     ipcMain.handle('vault:import:file', async (_event, provider: string) => {
-        const { dialog } = require('electron')
-
         const result = await dialog.showOpenDialog({
             properties: ['openFile'],
             filters: [{ name: 'Allowed Exports', extensions: ['json', 'zip'] }]
@@ -159,7 +150,6 @@ export function registerHandlers() {
     })
 
     ipcMain.handle('vault:wipe', async () => {
-        const { wipeVault } = require('./vault')
         wipeVault()
         return { success: true }
     })
