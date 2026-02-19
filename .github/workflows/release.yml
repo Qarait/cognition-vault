@@ -133,6 +133,9 @@ jobs:
           path: dist/benchmark.json
           if-no-files-found: warn
 
+      - name: Extract Release Notes
+        run: node scripts/extract_release_notes.js
+
       - name: Collect Release Assets
         id: relfiles
         shell: pwsh
@@ -155,4 +158,5 @@ jobs:
         with:
           fail_on_unmatched_files: true
           generate_release_notes: true
+          body_path: release_notes.md
           files: ${{ steps.relfiles.outputs.files }}
