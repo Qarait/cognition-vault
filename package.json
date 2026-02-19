@@ -42,7 +42,11 @@
     "appId": "com.cognition-vault.app",
     "productName": "Cognition Vault",
     "win": {
-      "target": "dir"
+      "target": [
+        "nsis",
+        "zip",
+        "dir"
+      ]
     },
     "asarUnpack": [
       "**/*.node",
