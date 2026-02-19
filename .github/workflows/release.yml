@@ -48,7 +48,7 @@ jobs:
             Where-Object { $_.FullName -match "win-unpacked" } |
             Select-Object -First 1
           if (-not $exe) { throw "Could not find unpacked exe under dist/win-unpacked" }
-          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/chatgpt_export.zip" --sentinel SENTINEL_CHATGPT_001 --provider chatgpt --smoke-out dist/smoke_chatgpt.json
+          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/chatgpt_export.zip" --sentinel SENTINEL_CHATGPT_001 --provider chatgpt --smoke-out dist/smoke_chatgpt.json | Out-Default
           if ($LASTEXITCODE -ne 0) { throw "Smoke ChatGPT failed (exit $LASTEXITCODE)" }
 
       - name: Phase 5 — Smoke Claude
@@ -60,7 +60,7 @@ jobs:
             Where-Object { $_.FullName -match "win-unpacked" } |
             Select-Object -First 1
           if (-not $exe) { throw "Could not find unpacked exe under dist/win-unpacked" }
-          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/claude_export.zip" --sentinel SENTINEL_CLAUDE_001 --provider claude --smoke-out dist/smoke_claude.json
+          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/claude_export.zip" --sentinel SENTINEL_CLAUDE_001 --provider claude --smoke-out dist/smoke_claude.json | Out-Default
           if ($LASTEXITCODE -ne 0) { throw "Smoke Claude failed (exit $LASTEXITCODE)" }
 
       - name: Phase 5 — Smoke Gemini
@@ -72,7 +72,7 @@ jobs:
             Where-Object { $_.FullName -match "win-unpacked" } |
             Select-Object -First 1
           if (-not $exe) { throw "Could not find unpacked exe under dist/win-unpacked" }
-          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/gemini_export.zip" --sentinel SENTINEL_GEMINI_001 --provider gemini --smoke-out dist/smoke_gemini.json
+          & $exe.FullName --smoke --vault-dir $vault --import "tests/fixtures/gemini_export.zip" --sentinel SENTINEL_GEMINI_001 --provider gemini --smoke-out dist/smoke_gemini.json | Out-Default
           if ($LASTEXITCODE -ne 0) { throw "Smoke Gemini failed (exit $LASTEXITCODE)" }
 
       - name: Generate SHA256SUMS.txt (release assets only)
